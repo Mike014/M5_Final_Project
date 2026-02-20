@@ -1,12 +1,11 @@
-using System.Threading.Tasks.Sources;
 using UnityEngine;
 using UnityEngine.AI;
 
-// Ogni nemico può essere in UNO SOLO di questi stati
 public enum EnemyState
 {
     Idle,      // Stationary: si gira / Patrol: cammina sui waypoint
     Chase,     // Insegue il player
+    Search,    // Cerca nell'area dell'ultima posizione nota
     Return     // Torna alla posizione/percorso originale
 }
 
@@ -21,9 +20,18 @@ public abstract class EnemyBase : MonoBehaviour
     [SerializeField] protected float _chaseSpeed = 5f;
     [SerializeField] protected float _normalSpeed = 2f;
 
+    [Header("Search")]
+    [SerializeField] private float _searchDuration = 5f;   // Secondi prima di arrendersi
+    [SerializeField] private float _searchRadius = 5f;     // Raggio punti casuali di ricerca
+    [SerializeField] private float _alertRadius = 15f;     // Raggio allerta nemici vicini
+
     protected NavMeshAgent _agent;
     protected EnemyState _currentState;
     protected Vector3 _lastKnownPlayerPosition;
+
+    private float _searchTimer;
+    private bool _isSearching = false;
+    private bool _hasAlerted = false; // Evita di chiamare AlertNearbyEnemies ogni frame
 
     protected virtual void Awake()
     {
@@ -43,16 +51,15 @@ public abstract class EnemyBase : MonoBehaviour
         // Esegue il comportamento dello stato corrente
         switch (_currentState)
         {
-            case EnemyState.Idle: HandleIdle(); break;
-            case EnemyState.Chase: HandleChase(); break;
+            case EnemyState.Idle:   HandleIdle();   break;
+            case EnemyState.Chase:  HandleChase();  break;
+            case EnemyState.Search: HandleSearch(); break;
             case EnemyState.Return: HandleReturn(); break;
         }
     }
 
-    // Ogni nemico implementa il suo Idle a modo suo
     protected abstract void HandleIdle();
 
-    // In EnemyBase.cs — sostituisci HandleChase()
     protected virtual void HandleChase()
     {
         _agent.speed = _chaseSpeed;
@@ -61,15 +68,59 @@ public abstract class EnemyBase : MonoBehaviour
         {
             _lastKnownPlayerPosition = _player.position;
             _agent.SetDestination(_player.position);
+
+            // Allerta i vicini solo una volta per ogni ingresso in Chase
+            // _hasAlerted si resetta in SetState quando si esce da Chase
+            if (!_hasAlerted)
+            {
+                AlertNearbyEnemies();
+                _hasAlerted = true;
+            }
         }
         else
         {
-            _agent.SetDestination(_lastKnownPlayerPosition);
+            // Player perso → vai in Search invece di Return direttamente
+            SetState(EnemyState.Search);
+        }
+    }
 
-            if (!_agent.pathPending &&
-                _agent.remainingDistance <= _agent.stoppingDistance)
+    protected virtual void HandleSearch()
+    {
+        _searchTimer += Time.deltaTime;
+
+        // Timer scaduto → rinuncia e torna alla base
+        if (_searchTimer >= _searchDuration)
+        {
+            _searchTimer = 0f;
+            _isSearching = false;
+            Debug.Log($"{gameObject.name}: Ricerca fallita → Return");
+            SetState(EnemyState.Return);
+            return;
+        }
+
+        // Ha ritrovato il player durante la ricerca → Chase
+        if (CanSeePlayer())
+        {
+            _searchTimer = 0f;
+            _isSearching = false;
+            SetState(EnemyState.Chase);
+            return;
+        }
+
+        // Genera un nuovo punto casuale quando arriva al precedente
+        if (!_isSearching ||
+            (!_agent.pathPending && _agent.remainingDistance <= _agent.stoppingDistance))
+        {
+            Vector3 randomPoint = _lastKnownPlayerPosition +
+                                  Random.insideUnitSphere * _searchRadius;
+            randomPoint.y = transform.position.y;
+
+            // SamplePosition trova il punto valido più vicino sulla NavMesh
+            if (NavMesh.SamplePosition(randomPoint, out NavMeshHit hit, _searchRadius, NavMesh.AllAreas))
             {
-                SetState(EnemyState.Return);
+                _agent.SetDestination(hit.position);
+                _isSearching = true;
+                Debug.Log($"{gameObject.name}: Cerco in {hit.position}");
             }
         }
     }
@@ -79,8 +130,41 @@ public abstract class EnemyBase : MonoBehaviour
     protected void SetState(EnemyState newState)
     {
         if (_currentState == newState) return;
+
+        // Reset flag allerta quando si esce da Chase
+        if (_currentState == EnemyState.Chase)
+            _hasAlerted = false;
+
         _currentState = newState;
         _agent.speed = _normalSpeed;
+    }
+
+    // Avvisa tutti i nemici nel raggio _alertRadius
+    protected void AlertNearbyEnemies()
+    {
+        Collider[] nearbyColliders = Physics.OverlapSphere(transform.position, _alertRadius);
+
+        foreach (Collider col in nearbyColliders)
+        {
+            EnemyBase enemy = col.GetComponent<EnemyBase>();
+
+            if (enemy != null && enemy != this)
+            {
+                enemy.ReceiveAlert(_lastKnownPlayerPosition);
+                Debug.Log($"{gameObject.name}: Allerto {enemy.gameObject.name}!");
+            }
+        }
+    }
+
+    // Riceve l'allerta da un altro nemico
+    public void ReceiveAlert(Vector3 playerPosition)
+    {
+        if (_currentState == EnemyState.Idle || _currentState == EnemyState.Return)
+        {
+            _lastKnownPlayerPosition = playerPosition;
+            SetState(EnemyState.Chase);
+            Debug.Log($"{gameObject.name}: Allertato! Vado in Chase");
+        }
     }
 
     protected bool CanSeePlayer()
@@ -90,14 +174,11 @@ public abstract class EnemyBase : MonoBehaviour
         Vector3 dirToPlayer = _player.position - transform.position;
         float distance = dirToPlayer.magnitude;
 
-        // 1. Il player è nel range?
         if (distance > _visionRange) return false;
 
-        // 2. Il player è nell'angolo del cono?
         float angle = Vector3.Angle(transform.forward, dirToPlayer);
         if (angle > _visionAngle / 2f) return false;
 
-        // 3. C'è un muro in mezzo? (Raycast per line of sight)
         if (Physics.Raycast(transform.position + Vector3.up,
                             dirToPlayer.normalized,
                             distance,
@@ -107,35 +188,22 @@ public abstract class EnemyBase : MonoBehaviour
         return true;
     }
 
-    // private void OnTriggerEnter(Collider other)
-    // {
-    //     if (other.CompareTag("Player"))
-    //     {
-    //         Debug.Log($"{gameObject.name}: Player catturato!");
-    //         GameController.Instance.OnPlayerCaught();
-    //     }
-    // }
-
-    // OnDrawGizmos viene chiamato automaticamente dall'Editor ogni frame
     private void OnDrawGizmos()
     {
-        // Colore diverso in base allo stato
-        Gizmos.color = _currentState == EnemyState.Chase
-            ? Color.red    // Sta inseguendo
-            : Color.yellow; // Idle o Return
+        // Colore in base allo stato
+        Gizmos.color = _currentState switch
+        {
+            EnemyState.Chase  => Color.red,
+            EnemyState.Search => Color.blue,
+            _                 => Color.yellow
+        };
 
-        // Disegna il range di visione come sfera wireframe
         Gizmos.DrawWireSphere(transform.position, _visionRange);
 
-        // Calcola i due raggi laterali del cono
-        // Ruota il forward di +/- metà dell'angolo
-        Vector3 rightBoundary = Quaternion.Euler(0, _visionAngle / 2f, 0)
-                                * transform.forward;
-        Vector3 leftBoundary = Quaternion.Euler(0, -_visionAngle / 2f, 0)
-                                * transform.forward;
+        Vector3 rightBoundary = Quaternion.Euler(0, _visionAngle / 2f, 0) * transform.forward;
+        Vector3 leftBoundary  = Quaternion.Euler(0, -_visionAngle / 2f, 0) * transform.forward;
 
-        // Disegna le due linee laterali del cono
         Gizmos.DrawRay(transform.position, rightBoundary * _visionRange);
-        Gizmos.DrawRay(transform.position, leftBoundary * _visionRange);
+        Gizmos.DrawRay(transform.position, leftBoundary  * _visionRange);
     }
 }
