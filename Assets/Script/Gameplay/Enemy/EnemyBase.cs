@@ -51,17 +51,20 @@ public abstract class EnemyBase : MonoBehaviour
     // Ogni nemico implementa il suo Idle a modo suo
     protected abstract void HandleIdle();
 
+    // In EnemyBase.cs — sostituisci HandleChase()
     protected virtual void HandleChase()
     {
         _agent.speed = _chaseSpeed;
-        _agent.SetDestination(_player.position);
 
-        // Se il player esce dalla visione, vai all'ultima pos nota
-        if (!CanSeePlayer())
+        if (CanSeePlayer())
+        {
+            _lastKnownPlayerPosition = _player.position; // Aggiorna continuamente
+            _agent.SetDestination(_player.position);
+        }
+        else
         {
             _agent.SetDestination(_lastKnownPlayerPosition);
 
-            // Se siamo arrivati all'ultima posizione nota → Return
             if (!_agent.pathPending &&
                 _agent.remainingDistance <= _agent.stoppingDistance)
             {

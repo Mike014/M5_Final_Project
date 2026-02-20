@@ -55,31 +55,31 @@ public class StationaryEnemy : EnemyBase
         }
     }
 
-    protected override void HandleChase()
-    {
-        _agent.speed = _chaseSpeed;
+    // protected override void HandleChase()
+    // {
+    //     _agent.speed = _chaseSpeed;
 
-        // SCELTA A: Lo vedo ANCORA
-        if (CanSeePlayer())
-        {
-            // Continuo ad inseguirlo attivamente
-            _agent.SetDestination(_player.position);
-        }
-        // SCELTA B: L'ho perso di vista!
-        else
-        {
-            // Vado a controllare l'ultimo punto in cui l'ho visto
-            _agent.SetDestination(_lastKnownPlayerPosition);
+    //     // SCELTA A: Lo vedo ANCORA
+    //     if (CanSeePlayer())
+    //     {
+    //         // Continuo ad inseguirlo attivamente
+    //         _agent.SetDestination(_player.position);
+    //     }
+    //     // SCELTA B: L'ho perso di vista!
+    //     else
+    //     {
+    //         // Vado a controllare l'ultimo punto in cui l'ho visto
+    //         _agent.SetDestination(_lastKnownPlayerPosition);
 
-            // ATTENZIONE: Il controllo del ritorno avviene SOLO qui
-            if (!_agent.pathPending &&
-                _agent.remainingDistance <= _agent.stoppingDistance)
-            {
-                Debug.Log($"EnemyBase: [{gameObject.name}] Nessuna traccia nel punto noto. Ritorno alla base!");
-                SetState(EnemyState.Return);
-            }
-        }
-    }
+    //         // ATTENZIONE: Il controllo del ritorno avviene SOLO qui
+    //         if (!_agent.pathPending &&
+    //             _agent.remainingDistance <= _agent.stoppingDistance)
+    //         {
+    //             Debug.Log($"EnemyBase: [{gameObject.name}] Nessuna traccia nel punto noto. Ritorno alla base!");
+    //             SetState(EnemyState.Return);
+    //         }
+    //     }
+    // }
 
     // Blocco temporanemante NON USATO
     // Usiamo OnDrawGizmosSelected invece di OnDrawGizmos
