@@ -47,7 +47,7 @@ public class PlayerController : MonoBehaviour
         {
             // SetDestination è il cuore: passiamo il punto 3D
             // all'agent che calcola il percorso automaticamente
-            Debug.Log($"Ho appena cliccato su: {hit.collider.name}");
+            // Debug.Log($"Ho appena cliccato su: {hit.collider.name}");
             _agent.SetDestination(hit.point);
         }
     }
