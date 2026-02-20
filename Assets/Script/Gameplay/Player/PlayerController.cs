@@ -12,6 +12,9 @@ public class PlayerController : MonoBehaviour
     // (deve puntare alla camera principale)
     private Camera _camera;
 
+    // Riferimento al "Ground"
+    [SerializeField] private LayerMask _groundLayer;
+
     // Utilizzo Awake piuttosto che Start in modo tale che i riferimenti siano stati già trovati
     void Awake()
     {
@@ -40,10 +43,11 @@ public class PlayerController : MonoBehaviour
 
         // Physics.Raycast lancia il raggio nella scena
         // "out hit" popola la struct con i dati del collider colpito
-        if (Physics.Raycast(ray, out hit))
+        if (Physics.Raycast(ray, out hit, Mathf.Infinity, _groundLayer))
         {
             // SetDestination è il cuore: passiamo il punto 3D
             // all'agent che calcola il percorso automaticamente
+            Debug.Log($"Ho appena cliccato su: {hit.collider.name}");
             _agent.SetDestination(hit.point);
         }
     }
