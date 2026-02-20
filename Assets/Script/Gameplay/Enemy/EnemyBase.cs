@@ -1,3 +1,4 @@
+using System.Threading.Tasks.Sources;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -12,8 +13,8 @@ public enum EnemyState
 public abstract class EnemyBase : MonoBehaviour
 {
     [Header("Detection")]
-    [SerializeField] protected float _visionAngle = 60f;    // Ampiezza cono in gradi
-    [SerializeField] protected float _visionRange = 10f;    // Distanza massima visione
+    [SerializeField] protected float _visionAngle = 60f;
+    [SerializeField] protected float _visionRange = 10f;
     [SerializeField] protected Transform _player;
 
     [Header("Chase")]
@@ -22,12 +23,12 @@ public abstract class EnemyBase : MonoBehaviour
 
     protected NavMeshAgent _agent;
     protected EnemyState _currentState;
-    protected Vector3 _lastKnownPlayerPosition; // Ultima pos nota del player
+    protected Vector3 _lastKnownPlayerPosition;
 
     protected virtual void Awake()
     {
         _agent = GetComponent<NavMeshAgent>();
-        _currentState = EnemyState.Idle; // Stato iniziale
+        _currentState = EnemyState.Idle;
     }
 
     protected virtual void Update()
@@ -58,7 +59,7 @@ public abstract class EnemyBase : MonoBehaviour
 
         if (CanSeePlayer())
         {
-            _lastKnownPlayerPosition = _player.position; // Aggiorna continuamente
+            _lastKnownPlayerPosition = _player.position;
             _agent.SetDestination(_player.position);
         }
         else
@@ -77,7 +78,7 @@ public abstract class EnemyBase : MonoBehaviour
 
     protected void SetState(EnemyState newState)
     {
-        if (_currentState == newState) return; // Evita transizioni inutili
+        if (_currentState == newState) return;
         _currentState = newState;
         _agent.speed = _normalSpeed;
     }
@@ -105,6 +106,15 @@ public abstract class EnemyBase : MonoBehaviour
 
         return true;
     }
+
+    // private void OnTriggerEnter(Collider other)
+    // {
+    //     if (other.CompareTag("Player"))
+    //     {
+    //         Debug.Log($"{gameObject.name}: Player catturato!");
+    //         GameController.Instance.OnPlayerCaught();
+    //     }
+    // }
 
     // OnDrawGizmos viene chiamato automaticamente dall'Editor ogni frame
     private void OnDrawGizmos()

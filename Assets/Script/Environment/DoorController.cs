@@ -13,11 +13,11 @@ public class DoorController : MonoBehaviour
     [SerializeField] private float _moveSpeed = 3f;
 
     private bool _isOpen = false;
-    private bool _isMoving = false; // Evita doppi input durante il movimento
+    private bool _isMoving = false; 
 
     public void ToggleDoor()
     {
-        if (_isMoving) return; // Ignora input se già in movimento
+        if (_isMoving) return; 
         
         _isOpen = !_isOpen;
         float targetZ = _isOpen ? _openPositionZ : _closedPositionZ;
@@ -44,7 +44,7 @@ public class DoorController : MonoBehaviour
                 targetPos, 
                 _moveSpeed * Time.deltaTime
             );
-            yield return null; // Aspetta il prossimo frame
+            yield return null; 
         }
 
         // Snap alla posizione esatta

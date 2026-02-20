@@ -51,4 +51,16 @@ public class PlayerController : MonoBehaviour
             _agent.SetDestination(hit.point);
         }
     }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        // Log QUALSIASI cosa tocchi il player, non solo i nemici
+        Debug.Log($"PlayerController: OnTriggerEnter con → {other.gameObject.name} | Tag: {other.tag} | Layer: {other.gameObject.layer}");
+
+        if (other.CompareTag("Enemy"))
+        {
+            Debug.Log("PlayerController: È un nemico! Chiamo OnPlayerCaught...");
+            GameController.Instance.OnPlayerCaught();
+        }
+    }
 }

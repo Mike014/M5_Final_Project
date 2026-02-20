@@ -6,7 +6,7 @@ public class ButtonInteraction : MonoBehaviour
     [SerializeField] private DoorController _targetDoor;
     [SerializeField] private float _interactionRange = 2f;
     [SerializeField] private KeyCode _interactionKey = KeyCode.E;
-    [SerializeField] private GameObject _interactionCanvas; // Trascina il Canvas figlio
+    [SerializeField] private GameObject _interactionCanvas; 
 
     private Transform _player;
     private bool _playerInRange = false;
