@@ -15,6 +15,11 @@ public class PlayerController : MonoBehaviour
     // Riferimento al "Ground"
     [SerializeField] private LayerMask _groundLayer;
 
+    [Header("Combat")]
+    [SerializeField] private GameObject _stunProjectilePrefab; // Prefab del proiettile
+    [SerializeField] private Transform _firePoint;             // Empty figlio del Player
+    [SerializeField] private KeyCode _fireKey = KeyCode.Space;
+
     // Utilizzo Awake piuttosto che Start in modo tale che i riferimenti siano stati già trovati
     void Awake()
     {
@@ -30,6 +35,9 @@ public class PlayerController : MonoBehaviour
         {
             MoveToClickPosition();
         }
+
+        if (Input.GetKeyDown(_fireKey))
+            FireStunProjectile();
     }
 
     private void MoveToClickPosition()
@@ -49,6 +57,25 @@ public class PlayerController : MonoBehaviour
             // all'agent che calcola il percorso automaticamente
             // Debug.Log($"Ho appena cliccato su: {hit.collider.name}");
             _agent.SetDestination(hit.point);
+        }
+    }
+
+    private void FireStunProjectile()
+    {
+        if (_stunProjectilePrefab == null || _firePoint == null) return;
+
+        // Calcola la direzione verso il mouse in world space
+        Ray ray = _camera.ScreenPointToRay(Input.mousePosition);
+        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, _groundLayer))
+        {
+            Vector3 direction = (hit.point - _firePoint.position).normalized;
+            direction.y = 0f; // Mantieni il proiettile orizzontale
+
+            // Ruota il firePoint verso il target
+            Quaternion rotation = Quaternion.LookRotation(direction);
+
+            Instantiate(_stunProjectilePrefab, _firePoint.position, rotation);
+            Debug.Log("Player: Proiettile stordente sparato!");
         }
     }
 

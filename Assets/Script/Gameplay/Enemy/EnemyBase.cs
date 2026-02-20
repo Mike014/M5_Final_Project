@@ -6,7 +6,8 @@ public enum EnemyState
     Idle,      // Stationary: si gira / Patrol: cammina sui waypoint
     Chase,     // Insegue il player
     Search,    // Cerca nell'area dell'ultima posizione nota
-    Return     // Torna alla posizione/percorso originale
+    Return,    // Torna alla posizione/percorso originale
+    Stunned    // Il player spara un "colpo stordente", se colpisce un nemico questo poi torna al suo stato precedente.
 }
 
 public abstract class EnemyBase : MonoBehaviour
@@ -23,7 +24,12 @@ public abstract class EnemyBase : MonoBehaviour
     [Header("Search")]
     [SerializeField] private float _searchDuration = 5f;   // Secondi prima di arrendersi
     [SerializeField] private float _searchRadius = 5f;     // Raggio punti casuali di ricerca
-    [SerializeField] private float _alertRadius = 15f;     // Raggio allerta nemici vicini
+    [SerializeField] private float _alertRadius = 20f;     // Raggio allerta nemici vicini
+
+    [Header("Stun")]
+    [SerializeField] private float _stunDuration = 3f;
+    private float _stunTimer;
+    private EnemyState _stateBeforeStun; // Ricorda lo stato precedente
 
     protected NavMeshAgent _agent;
     protected EnemyState _currentState;
@@ -41,6 +47,11 @@ public abstract class EnemyBase : MonoBehaviour
 
     protected virtual void Update()
     {
+        if (_currentState == EnemyState.Stunned)
+        {
+            HandleStunned();
+            return;
+        }
         // Controlla visione ogni frame
         if (CanSeePlayer())
         {
@@ -51,10 +62,11 @@ public abstract class EnemyBase : MonoBehaviour
         // Esegue il comportamento dello stato corrente
         switch (_currentState)
         {
-            case EnemyState.Idle:   HandleIdle();   break;
-            case EnemyState.Chase:  HandleChase();  break;
+            case EnemyState.Idle: HandleIdle(); break;
+            case EnemyState.Chase: HandleChase(); break;
             case EnemyState.Search: HandleSearch(); break;
             case EnemyState.Return: HandleReturn(); break;
+            case EnemyState.Stunned: HandleStunned(); break;
         }
     }
 
@@ -142,16 +154,27 @@ public abstract class EnemyBase : MonoBehaviour
     // Avvisa tutti i nemici nel raggio _alertRadius
     protected void AlertNearbyEnemies()
     {
+        // Log la distanza da tutti i nemici nella scena
+        EnemyBase[] allEnemies = FindObjectsOfType<EnemyBase>();
+        foreach (EnemyBase e in allEnemies)
+        {
+            if (e != this)
+            {
+                float dist = Vector3.Distance(transform.position, e.transform.position);
+                Debug.Log($"{gameObject.name} → {e.gameObject.name}: distanza {dist:F2}");
+            }
+        }
         Collider[] nearbyColliders = Physics.OverlapSphere(transform.position, _alertRadius);
+        Debug.Log($"{gameObject.name}: OverlapSphere trovato {nearbyColliders.Length} collider nel raggio {_alertRadius}");
 
         foreach (Collider col in nearbyColliders)
         {
             EnemyBase enemy = col.GetComponent<EnemyBase>();
+            Debug.Log($"  → Collider: {col.gameObject.name} | EnemyBase: {(enemy != null ? "trovato" : "NULL")}");
 
             if (enemy != null && enemy != this)
             {
                 enemy.ReceiveAlert(_lastKnownPlayerPosition);
-                Debug.Log($"{gameObject.name}: Allerto {enemy.gameObject.name}!");
             }
         }
     }
@@ -188,22 +211,52 @@ public abstract class EnemyBase : MonoBehaviour
         return true;
     }
 
+    public void GetStunned()
+    {
+        if (_currentState == EnemyState.Stunned) return; // Evita doppio stun
+
+        _stateBeforeStun = _currentState;
+        _agent.ResetPath();
+        _agent.isStopped = true;
+
+        // Assegna direttamente senza passare per SetState
+        // (SetState resetta la speed e potrebbe causare problemi)
+        _currentState = EnemyState.Stunned;
+
+        Debug.Log($"{gameObject.name}: STORDITO | Stato salvato: {_stateBeforeStun}");
+    }
+    private void HandleStunned()
+    {
+        _stunTimer += Time.deltaTime;
+
+        if (_stunTimer >= _stunDuration)
+        {
+            _stunTimer = 0f;
+            _agent.isStopped = false;
+
+            // Torna allo stato precedente allo stun
+            SetState(_stateBeforeStun);
+            Debug.Log($"{gameObject.name}: Stun terminato → torno a {_stateBeforeStun}");
+        }
+    }
+
     private void OnDrawGizmos()
     {
         // Colore in base allo stato
         Gizmos.color = _currentState switch
         {
-            EnemyState.Chase  => Color.red,
+            EnemyState.Chase => Color.red,
             EnemyState.Search => Color.blue,
-            _                 => Color.yellow
+            EnemyState.Stunned => Color.cyan,
+            _ => Color.yellow
         };
 
         Gizmos.DrawWireSphere(transform.position, _visionRange);
 
         Vector3 rightBoundary = Quaternion.Euler(0, _visionAngle / 2f, 0) * transform.forward;
-        Vector3 leftBoundary  = Quaternion.Euler(0, -_visionAngle / 2f, 0) * transform.forward;
+        Vector3 leftBoundary = Quaternion.Euler(0, -_visionAngle / 2f, 0) * transform.forward;
 
         Gizmos.DrawRay(transform.position, rightBoundary * _visionRange);
-        Gizmos.DrawRay(transform.position, leftBoundary  * _visionRange);
+        Gizmos.DrawRay(transform.position, leftBoundary * _visionRange);
     }
 }

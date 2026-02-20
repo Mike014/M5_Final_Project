@@ -136,7 +136,7 @@ GameObject:
   - component: {fileID: 115802689}
   m_Layer: 0
   m_Name: Wall (1)
-  m_TagString: Untagged
+  m_TagString: Wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -354,7 +354,7 @@ GameObject:
   - component: {fileID: 279230028}
   m_Layer: 0
   m_Name: Door
-  m_TagString: Untagged
+  m_TagString: Wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -492,6 +492,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 953437785}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &548396214
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 548396215}
+  m_Layer: 10
+  m_Name: FirePoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &548396215
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 548396214}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1512479147}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &592343972
 GameObject:
   m_ObjectHideFlags: 0
@@ -600,7 +631,7 @@ GameObject:
   - component: {fileID: 644862832}
   m_Layer: 0
   m_Name: Wall (5)
-  m_TagString: Untagged
+  m_TagString: Wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -799,7 +830,7 @@ GameObject:
   - component: {fileID: 850859325}
   m_Layer: 0
   m_Name: Wall (2)
-  m_TagString: Untagged
+  m_TagString: Wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -904,7 +935,7 @@ GameObject:
   - component: {fileID: 889065176}
   m_Layer: 0
   m_Name: Wall (3)
-  m_TagString: Untagged
+  m_TagString: Wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1417,14 +1448,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0151c65da0ee5ac4786bdcaf0836d78e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _visionAngle: 60
+  _visionAngle: 90
   _visionRange: 10
   _player: {fileID: 1512479147}
   _chaseSpeed: 1.5
   _normalSpeed: 2
   _searchDuration: 5
   _searchRadius: 5
-  _alertRadius: 15
+  _alertRadius: 20
+  _stunDuration: 3
   _waypoints:
   - {fileID: 481008323}
   - {fileID: 1299891970}
@@ -1444,7 +1476,7 @@ GameObject:
   - component: {fileID: 1247743066}
   m_Layer: 0
   m_Name: Wall (4)
-  m_TagString: Untagged
+  m_TagString: Wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1596,7 +1628,7 @@ Transform:
   m_GameObject: {fileID: 1306880821}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 22.58, y: 1, z: 2.5}
+  m_LocalPosition: {x: 22.58, y: 1, z: -0.2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1694,7 +1726,8 @@ MonoBehaviour:
   _normalSpeed: 2
   _searchDuration: 5
   _searchRadius: 5
-  _alertRadius: 15
+  _alertRadius: 20
+  _stunDuration: 3
   _rotationInterval: 2
   _rotationAngle: 90
 --- !u!195 &1306880827
@@ -1733,7 +1766,7 @@ GameObject:
   - component: {fileID: 1318933808}
   m_Layer: 0
   m_Name: Wall
-  m_TagString: Untagged
+  m_TagString: Wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2019,7 +2052,7 @@ GameObject:
   - component: {fileID: 1512479148}
   - component: {fileID: 1512479149}
   - component: {fileID: 1512479151}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Player
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -2043,7 +2076,7 @@ CapsuleCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.5
   m_Height: 2
@@ -2111,7 +2144,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 548396215}
   m_Father: {fileID: 237995669}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!195 &1512479148
@@ -2151,6 +2185,9 @@ MonoBehaviour:
   _groundLayer:
     serializedVersion: 2
     m_Bits: 256
+  _stunProjectilePrefab: {fileID: 2560615837380219609, guid: f63fe69efc2f9f24abe7ab79b83ef364, type: 3}
+  _firePoint: {fileID: 548396215}
+  _fireKey: 32
 --- !u!65 &1512479150
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2214,7 +2251,7 @@ GameObject:
   - component: {fileID: 1559076611}
   m_Layer: 0
   m_Name: Button
-  m_TagString: Untagged
+  m_TagString: Button
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2663,7 +2700,7 @@ Transform:
   m_GameObject: {fileID: 1963245363}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 15.5, y: 1, z: 10.4}
+  m_LocalPosition: {x: 11.56, y: 1, z: 11.45}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2681,14 +2718,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c2a7e5018b199d9408226cab025c7b71, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _visionAngle: 60
+  _visionAngle: 120
   _visionRange: 10
   _player: {fileID: 1512479147}
   _chaseSpeed: 1.5
   _normalSpeed: 2
   _searchDuration: 5
   _searchRadius: 5
-  _alertRadius: 15
+  _alertRadius: 20
+  _stunDuration: 3
   _rotationInterval: 2
   _rotationAngle: 90
 --- !u!195 &1963245366
