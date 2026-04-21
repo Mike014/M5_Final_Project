@@ -1,91 +1,99 @@
-# Progetto Fine Modulo 5 — Epicode Game Development
+# Module 5 Final Project — Epicode Game Development
 
-Un gioco stealth in visuale isometrica sviluppato in Unity come progetto conclusivo del Modulo 5 del Master in Game Development Epicode.
-
-Il giocatore deve attraversare un labirinto ed raggiungere l'uscita evitando le guardie, interagendo con elementi dell'ambiente e utilizzando colpi stordenti per aprirsi un varco.
+A stealth game with isometric view developed in Unity as the final project for Module 5 of the Epicode Master in Game Development.
+The player must navigate a maze and reach the exit while avoiding guards, interacting with environmental elements, and using stun shots to clear a path.
 
 ---
 
-## Tecnologie utilizzate
+## Technologies Used
 
-- **Unity** (versione con AI Navigation package)
+- **Unity** (version with AI Navigation package)
 - **C#**
-- **Cinemachine** — telecamera isometrica
-- **NavMesh / NavMeshSurface** — navigazione AI
-- **ProBuilder** (opzionale) / primitive Unity per la mappa
+- **Cinemachine** — isometric camera
+- **NavMesh / NavMeshSurface** — AI navigation
+- **ProBuilder** (optional) / Unity primitives for the map
 
 ---
 
-## Funzionalità implementate
+## Implemented Features
 
 ### Player
-- Movimento **click-to-move** tramite NavMeshAgent e Raycast sulla NavMesh
-- LayerMask "Ground" per filtrare i click solo sul pavimento
-- **Colpo stordente** (tasto Space) — spara un proiettile verso il punto cliccato
-- Rilevamento cattura tramite `OnTriggerEnter` con tag "Enemy"
 
-### Telecamera
-- Visuale **isometrica** stile Diablo/Hades con Cinemachine Virtual Camera
-- Body: `Transposer` con `Binding Mode: World Space` — angolo fisso assoluto
-- Segue il player mantenendo offset costante
+- **Click-to-move** movement via NavMeshAgent and Raycast on the NavMesh
+- "Ground" LayerMask to filter clicks on floor surfaces only
+- **Stun shot** (Space key) — fires a projectile toward the clicked point
+- Capture detection via `OnTriggerEnter` with the "Enemy" tag
 
-### Mappa
-- Labirinto costruito con primitive Unity (Plane + Cube)
-- **NavMesh baked** a runtime con `NavMeshSurface` per supportare porte dinamiche
+### Camera
 
-### Sistema Nemici — FSM con Enum
+- **Isometric** view in the style of Diablo/Hades using a Cinemachine Virtual Camera
+- Body: `Transposer` with `Binding Mode: World Space` — fixed absolute angle
+- Follows the player while maintaining a constant offset
 
-Tutti i nemici condividono la classe base `EnemyBase` con 5 stati:
+### Map
 
-| Stato | Descrizione |
+- Maze built with Unity primitives (Plane + Cube)
+- **NavMesh baked** at runtime via `NavMeshSurface` to support dynamic doors
+
+### Enemy System — FSM with Enum
+
+All enemies share the base class `EnemyBase` with 5 states:
+
+| State | Description |
 |-------|-------------|
-| `Idle` | Comportamento di default (rotazione o patrolling) |
-| `Chase` | Insegue il player attivamente |
-| `Search` | Cerca nell'area dell'ultima posizione nota |
-| `Return` | Torna alla posizione/percorso originale |
-| `Stunned` | Bloccato temporaneamente dal colpo stordente |
+| `Idle` | Default behavior (rotation or patrolling) |
+| `Chase` | Actively pursues the player |
+| `Search` | Searches the area around the last known position |
+| `Return` | Returns to original position/route |
+| `Stunned` | Temporarily disabled by a stun shot |
 
-**StationaryEnemy** — si gira di 90° ogni X secondi, poi torna alla rotazione iniziale dopo il rientro.
+**StationaryEnemy** — rotates 90° every X seconds, then returns to its initial rotation after resuming.  
+**PatrolEnemy** — follows an array of waypoints in a loop, resuming from the last visited waypoint after returning.
 
-**PatrolEnemy** — segue un array di waypoints in loop, riprende dall'ultimo waypoint visitato dopo il rientro.
+#### Vision Cone
 
-#### Cono di visione
-- Tre check in sequenza: range → angolo → line of sight (Raycast verso i muri)
-- Visualizzato nell'Editor tramite Gizmos (colore varia per stato)
+- Three sequential checks: range → angle → line of sight (Raycast against walls)
+- Visualized in the Editor via Gizmos (color varies by state)
 
-#### Alert globale
-- Quando un nemico vede il player, avvisa tutti i nemici nel raggio `_alertRadius` tramite `Physics.OverlapSphere`
-- I nemici allertati passano direttamente in Chase
+#### Global Alert
 
-### Interazione Ambiente
-- **Bottone** — rilevamento proximità con `_interactionRange`, interazione con tasto E
-- **Porta** — si muove sull'asse Z tramite coroutine con `Vector3.MoveTowards`
-- **NavMesh rebake a runtime** — `NavMeshSurface.BuildNavMesh()` chiamato solo dopo che la porta ha raggiunto la posizione finale
-- **UI Proximity** — Canvas in World Space figlio del bottone, appare/sparisce in base alla distanza del player
+- When an enemy spots the player, it notifies all enemies within `_alertRadius` via `Physics.OverlapSphere`
+- Alerted enemies transition directly to Chase
 
-### Sistema di cattura
-- **Respawn** — il player viene teletrasportato al punto di spawn tramite `NavMeshAgent.Warp()`
-- `GameController` implementato come **Singleton** con `DontDestroyOnLoad`
+### Environment Interaction
 
-### Menu Principale
-- Due bottoni: **Start** (carica Level1) e **Exit Game**
-- Gestione scene tramite `SceneManager`
+- **Button** — proximity detection with `_interactionRange`, interaction on key E
+- **Door** — moves along the Z axis via coroutine using `Vector3.MoveTowards`
+- **Runtime NavMesh rebake** — `NavMeshSurface.BuildNavMesh()` called only after the door has reached its final position
+- **Proximity UI** — World Space Canvas parented to the button, appears/disappears based on player distance
+
+### Capture System
+
+- **Respawn** — the player is teleported to the spawn point via `NavMeshAgent.Warp()`
+- `GameController` implemented as a **Singleton** with `DontDestroyOnLoad`
+
+### Main Menu
+
+- Two buttons: **Start** (loads Level1) and **Exit Game**
+- Scene management via `SceneManager`
 
 ---
 
-## Extra implementati
+## Extra Features
 
-### FSM Avanzata
-- Stato **Search**: dopo aver perso il player, il nemico genera punti casuali nell'area tramite `NavMesh.SamplePosition` prima di tornare alla base
-- **Alert globale** con flag `_hasAlerted` per evitare chiamate ridondanti ogni frame
+### Advanced FSM
+
+- **Search** state: after losing the player, the enemy generates random points in the area via `NavMesh.SamplePosition` before returning to base
+- **Global alert** with `_hasAlerted` flag to avoid redundant calls every frame
 
 ### Player Stun
-- Proiettile fisico con `Rigidbody` kinematico e `Collision Detection: Continuous`
-- Collisione Player/Proiettile disabilitata via **Physics Layer Collision Matrix** (soluzione engine-level, zero overhead)
-- Il nemico ricorda lo stato precedente allo stun e vi torna al termine
+
+- Physical projectile with kinematic `Rigidbody` and `Collision Detection: Continuous`
+- Player/Projectile collision disabled via the **Physics Layer Collision Matrix** (engine-level solution, zero overhead)
+- The enemy remembers its state prior to being stunned and resumes it once the stun ends
 
 ---
 
-## Autore
+## Author
 
-Michele Grimaldi — Master in Game Development, Epicode — Modulo 5
+Michele Grimaldi — Master in Game Development, Epicode — Module 5
